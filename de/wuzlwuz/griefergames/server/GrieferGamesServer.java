@@ -92,19 +92,19 @@ public class GrieferGamesServer extends Server {
 
 					TextComponentString switchServerMSGBefore = new TextComponentString(
 							"\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500[");
-					switchServerMSGBefore.func_150255_a(new Style().func_150238_a(TextFormatting.WHITE));
-					switchServerMSG.func_150257_a(switchServerMSGBefore);
+					switchServerMSGBefore.setStyle(new Style().setColor(TextFormatting.WHITE));
+					switchServerMSG.appendSibling(switchServerMSGBefore);
 
 					TextComponentString switchServerMSGBetween = new TextComponentString("SubServer: " + subServerName);
-					switchServerMSGBetween.func_150255_a(new Style().func_150238_a(TextFormatting.AQUA).func_150227_a(true));
-					switchServerMSG.func_150257_a(switchServerMSGBetween);
+					switchServerMSGBetween.setStyle(new Style().setColor(TextFormatting.AQUA).setBold(true));
+					switchServerMSG.appendSibling(switchServerMSGBetween);
 
 					TextComponentString switchServerMSGAfter = new TextComponentString(
 							"]\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
-					switchServerMSGAfter.func_150255_a(new Style().func_150238_a(TextFormatting.WHITE));
-					switchServerMSG.func_150257_a(switchServerMSGAfter);
+					switchServerMSGAfter.setStyle(new Style().setColor(TextFormatting.WHITE));
+					switchServerMSG.appendSibling(switchServerMSGAfter);
 
-					getMc().field_71439_g.func_145747_a(switchServerMSG);
+					getMc().player.sendMessage(switchServerMSG);
 				}
 			}
 		});
@@ -301,12 +301,12 @@ public class GrieferGamesServer extends Server {
 		try {
 			ITextComponent msg = (ITextComponent) o;
 
-			if (msg.func_150260_c().length() == 0)
+			if (msg.getUnformattedText().length() == 0)
 				return msg;
 
 			MessageHelper msgHelper = getMsgHelper();
-			String unformatted = msg.func_150260_c();
-			String formatted = msg.func_150254_d();
+			String unformatted = msg.getUnformattedText();
+			String formatted = msg.getFormattedText();
 
 			System.out.println(formatted);
 
@@ -314,12 +314,12 @@ public class GrieferGamesServer extends Server {
 				if (msgHelper.isValidPayMessage(unformatted, formatted) > 0) {
 					if (GrieferGames.getSettings().isPayMarker()) {
 						ITextComponent checkmarkText = new TextComponentString(" \u2714")
-								.func_150255_a(new Style().func_150238_a(TextFormatting.GREEN));
-						msg.func_150257_a(checkmarkText);
+								.setStyle(new Style().setColor(TextFormatting.GREEN));
+						msg.appendSibling(checkmarkText);
 					}
 					if (GrieferGames.getSettings().isPayHover()) {
 						ITextComponent hoverText = new TextComponentString("Es ist eine valide Zahlung!");
-						msg.func_150256_b().func_150209_a(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
+						msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
 					}
 				}
 			}
@@ -327,24 +327,24 @@ public class GrieferGamesServer extends Server {
 				setDoClearChat(true);
 				ITextComponent newMsg = new TextComponentString("\n");
 				for (int i = 0; i < 100; i++) {
-					newMsg.func_150257_a(new TextComponentString("\n"));
+					newMsg.appendSibling(new TextComponentString("\n"));
 				}
-				newMsg.func_150257_a(msg);
+				newMsg.appendSibling(msg);
 				return newMsg;
 			}
 			if (GrieferGames.getSettings().isBetterIgnoreList()
 					&& msgHelper.isIngnoreListChatMessage(unformatted, formatted) > 0) {
-				List<ITextComponent> ignoreList = msg.func_150253_a();
+				List<ITextComponent> ignoreList = msg.getSiblings();
 				if (ignoreList.size() == 2) {
-					Style ignoStyle = ignoreList.get(0).func_150256_b().func_150206_m();
-					ITextComponent newMsg = new TextComponentString("Ignoriert: ").func_150255_a(ignoStyle);
+					Style ignoStyle = ignoreList.get(0).getStyle().createDeepCopy();
+					ITextComponent newMsg = new TextComponentString("Ignoriert: ").setStyle(ignoStyle);
 
-					String ignoredNames = ignoreList.get(1).func_150260_c().trim();
+					String ignoredNames = ignoreList.get(1).getUnformattedText().trim();
 					String[] ignoredNamesArr = ignoredNames.split(" ");
 					for (String ignoName : ignoredNamesArr) {
-						newMsg.func_150257_a(new TextComponentString("\n"));
-						newMsg.func_150257_a(new TextComponentString(" - " + ignoName)
-								.func_150255_a(new Style().func_150238_a(TextFormatting.WHITE)));
+						newMsg.appendSibling(new TextComponentString("\n"));
+						newMsg.appendSibling(new TextComponentString(" - " + ignoName)
+								.setStyle(new Style().setColor(TextFormatting.WHITE)));
 					}
 
 					return newMsg;
@@ -357,7 +357,7 @@ public class GrieferGamesServer extends Server {
 				String dateNowStr = LocalDateTime.now().format(formatter);
 
 				ITextComponent hoverText = new TextComponentString(dateNowStr);
-				msg.func_150256_b().func_150209_a(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
+				msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -375,19 +375,19 @@ public class GrieferGamesServer extends Server {
 			}
 			if (System.currentTimeMillis() > this.nextScoreboardRequest) {
 				this.nextScoreboardRequest = System.currentTimeMillis() + 500L;
-				Scoreboard scoreboard = LabyModCore.getMinecraft().getWorld().func_96441_U();
-				ScoreObjective scoreobjective = scoreboard.func_96539_a(1);
+				Scoreboard scoreboard = LabyModCore.getMinecraft().getWorld().getScoreboard();
+				ScoreObjective scoreobjective = scoreboard.getObjectiveInDisplaySlot(1);
 				if (scoreobjective != null) {
-					List<Score> scoreList = (List<Score>) scoreboard.func_96534_i(scoreobjective);
+					List<Score> scoreList = (List<Score>) scoreboard.getSortedScores(scoreobjective);
 					Collections.reverse(scoreList);
 					for (int i = 0; i < scoreList.size(); i++) {
-						ScorePlayerTeam scorePlayerTeam = scoreboard.func_96509_i(scoreList.get(i).func_96653_e());
-						String scoreName = ScorePlayerTeam.func_96667_a(scorePlayerTeam,
-								scoreList.get(i).func_96653_e());
+						ScorePlayerTeam scorePlayerTeam = scoreboard.getPlayersTeam(scoreList.get(i).getPlayerName());
+						String scoreName = ScorePlayerTeam.formatPlayerName(scorePlayerTeam,
+								scoreList.get(i).getPlayerName());
 						if (scoreName.indexOf("Server:") > 0) {
-							scorePlayerTeam = scoreboard.func_96509_i(scoreList.get(i + 1).func_96653_e());
+							scorePlayerTeam = scoreboard.getPlayersTeam(scoreList.get(i + 1).getPlayerName());
 							scoreName = ScorePlayerTeam
-									.func_96667_a(scorePlayerTeam, scoreList.get(i + 1).func_96653_e())
+									.formatPlayerName(scorePlayerTeam, scoreList.get(i + 1).getPlayerName())
 									.replaceAll("§[0-9a-z]", "").trim();
 							if (!getSubServer().matches(scoreName)) {
 								for (SubServerListener ssl : subServerListener)
