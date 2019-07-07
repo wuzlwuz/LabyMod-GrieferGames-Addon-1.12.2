@@ -254,7 +254,7 @@ public class MessageHelper {
 		if (matcher.find()) {
 			playerRank = matcher.group(1);
 		}
-		return playerRank;
+		return playerRank.toLowerCase();
 	}
 
 	public boolean isInTeam(String playerRank) {

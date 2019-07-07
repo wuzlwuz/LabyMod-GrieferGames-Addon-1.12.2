@@ -126,6 +126,7 @@ public class GrieferGamesServer extends Server {
 			public void onSubServerChanged(String subServerNameOld, String subServerName) {
 				GrieferGames.getGriefergames().setGodActive(false);
 				GrieferGames.getGriefergames().setVanishActive(false);
+
 				if (subServerName.equalsIgnoreCase("lobby")) {
 					String accountName = getMc().player.getName().trim();
 
