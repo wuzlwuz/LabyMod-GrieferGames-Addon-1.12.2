@@ -130,31 +130,36 @@ public class GrieferGamesServer extends Server {
 				if (subServerName.equalsIgnoreCase("lobby")) {
 					String accountName = getMc().player.getName().trim();
 
-					NetHandlerPlayClient nethandlerplayclient = getMc().player.connection;
-					Collection<NetworkPlayerInfo> playerMap = nethandlerplayclient.getPlayerInfoMap();
+					try {
+						NetHandlerPlayClient nethandlerplayclient = getMc().player.connection;
+						Collection<NetworkPlayerInfo> playerMap = nethandlerplayclient.getPlayerInfoMap();
 
-					for (NetworkPlayerInfo player : playerMap) {
-						ITextComponent tabListName = player.getDisplayName();
-						if (accountName.length() > 0 && accountName.equalsIgnoreCase(
-								getMsgHelper().getPayerName(tabListName.getUnformattedText()).trim())) {
+						for (NetworkPlayerInfo player : playerMap) {
+							ITextComponent tabListName = player.getDisplayName();
+							if (accountName.length() > 0 && accountName.equalsIgnoreCase(
+									getMsgHelper().getPayerName(tabListName.getUnformattedText()).trim())) {
 
-							setPlayerRank(getMsgHelper().getPayerRank(tabListName.getUnformattedText().trim()));
-							setIsInTeam(getMsgHelper().isInTeam(getPlayerRank()));
+								setPlayerRank(getMsgHelper().getPayerRank(tabListName.getUnformattedText().trim()));
+								setIsInTeam(getMsgHelper().isInTeam(getPlayerRank()));
+							}
 						}
-					}
-					if (!getModulesLoaded()) {
-						setModulesLoaded(true);
-						new FlyModule();
-						if (getMsgHelper().showGodModule(getPlayerRank())) {
-							new GodmodeModule();
+						if (!getModulesLoaded()) {
+							setModulesLoaded(true);
+							new FlyModule();
+							if (getMsgHelper().showGodModule(getPlayerRank())) {
+								new GodmodeModule();
+							}
+							if (getMsgHelper().showVanishModule(getPlayerRank())) {
+								new VanishModule();
+							}
 						}
-						if (getMsgHelper().showVanishModule(getPlayerRank())) {
-							new VanishModule();
-						}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				}
 			}
 		});
+
 	}
 
 	public String getSubServer() {
@@ -410,6 +415,8 @@ public class GrieferGamesServer extends Server {
 					}
 				}
 				msg = newMsg;
+				unformatted = msg.getUnformattedText();
+				formatted = msg.getFormattedText();
 				o = msg;
 			}
 
@@ -471,7 +478,7 @@ public class GrieferGamesServer extends Server {
 		return o;
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public void onTick(TickEvent.ClientTickEvent event) {
 		if (LabyModCore.getMinecraft().getWorld() != null && event.phase == TickEvent.Phase.START) {
 			if (System.currentTimeMillis() > this.nextLastMessageRequest) {
