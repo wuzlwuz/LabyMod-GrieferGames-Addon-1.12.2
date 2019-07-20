@@ -40,6 +40,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -128,10 +129,10 @@ public class GrieferGamesServer extends Server {
 				GrieferGames.getGriefergames().setVanishActive(false);
 
 				if (subServerName.equalsIgnoreCase("lobby")) {
-					String accountName = getMc().player.getName().trim();
+					String accountName = LabyModCore.getMinecraft().getPlayer().getName().trim();
 
 					try {
-						NetHandlerPlayClient nethandlerplayclient = getMc().player.connection;
+						NetHandlerPlayClient nethandlerplayclient = LabyModCore.getMinecraft().getPlayer().connection;
 						Collection<NetworkPlayerInfo> playerMap = nethandlerplayclient.getPlayerInfoMap();
 
 						for (NetworkPlayerInfo player : playerMap) {
@@ -159,7 +160,6 @@ public class GrieferGamesServer extends Server {
 				}
 			}
 		});
-
 	}
 
 	public String getSubServer() {
@@ -233,15 +233,22 @@ public class GrieferGamesServer extends Server {
 						double money = getMsgHelper().getMoneyPay(unformatted);
 						if (money > 0) {
 							DecimalFormat moneyFormat = (DecimalFormat) DecimalFormat.getNumberInstance(Locale.ENGLISH);
+
+							String gotMoney = GrieferGames.getGriefergames().getLanguageHelper()
+									.getText("server.GrieferGamesServer.GotMoney", "${money} received.");
+							String gotMoneyFrom = GrieferGames.getGriefergames().getLanguageHelper().getText(
+									"server.GrieferGamesServer.GotMoneyFrom", "You received ${money} from {name}.");
+
+							gotMoney = gotMoney.replace("{money}", moneyFormat.format(money));
+							gotMoneyFrom = gotMoneyFrom.replace("{money}", moneyFormat.format(money));
+							gotMoneyFrom = gotMoneyFrom.replace("{name}", displayName);
+
 							if (playerUUID == null) {
-								LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(
-										"$" + moneyFormat.format(money) + " erhalten.",
-										"Du hast $" + moneyFormat.format(money) + " von " + displayName + " erhalten.");
+								LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(gotMoney,
+										gotMoneyFrom);
 							} else {
 								LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(
-										new GameProfile(playerUUID, payerName),
-										"$" + moneyFormat.format(money) + " erhalten.",
-										"Du hast $" + moneyFormat.format(money) + " von " + displayName + " erhalten.");
+										new GameProfile(playerUUID, payerName), gotMoney, gotMoneyFrom);
 							}
 						}
 					}
@@ -258,18 +265,28 @@ public class GrieferGamesServer extends Server {
 						double money = getMsgHelper().getMoneyPay(unformatted);
 						if (money > 0) {
 							DecimalFormat moneyFormat = (DecimalFormat) DecimalFormat.getNumberInstance(Locale.ENGLISH);
+
+							String paidMoney = GrieferGames.getGriefergames().getLanguageHelper()
+									.getText("server.GrieferGamesServer.PaidMoney", "${money} paid.");
+							String paidMoneyTo = GrieferGames.getGriefergames().getLanguageHelper()
+									.getText("server.GrieferGamesServer.PaidMoneyTo", "You paid ${money} to {name}.");
+
+							paidMoney = paidMoney.replace("{money}", moneyFormat.format(money));
+							paidMoneyTo = paidMoneyTo.replace("{money}", moneyFormat.format(money));
+							paidMoneyTo = paidMoneyTo.replace("{name}", displayName);
+
 							if (playerUUID == null) {
-								LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(
-										"$" + moneyFormat.format(money) + " bezahlt.",
-										"Du hast $" + moneyFormat.format(money) + " an " + displayName + " bezahlt.");
+								LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(paidMoney,
+										paidMoneyTo);
 							} else {
 								LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(
-										new GameProfile(playerUUID, payerName),
-										"$" + moneyFormat.format(money) + " bezahlt.",
-										"Du hast $" + moneyFormat.format(money) + " an " + displayName + " bezahlt.");
+										new GameProfile(playerUUID, payerName), paidMoney, paidMoneyTo);
 							}
 						}
 					}
+					return GrieferGames.getSettings().isPayChatRight() ? ChatDisplayAction.SWAP
+							: ChatDisplayAction.NORMAL;
+				} else if (getMsgHelper().hasEarnedMoneyMessage(unformatted, formatted) > 0) {
 					return GrieferGames.getSettings().isPayChatRight() ? ChatDisplayAction.SWAP
 							: ChatDisplayAction.NORMAL;
 				} else if (getMsgHelper().bankPayInMessage(unformatted, formatted) > 0) {
@@ -277,9 +294,18 @@ public class GrieferGamesServer extends Server {
 						int money = getMsgHelper().getMoneyBank(unformatted);
 						if (money > 0) {
 							DecimalFormat moneyFormat = (DecimalFormat) DecimalFormat.getNumberInstance(Locale.ENGLISH);
-							LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(
-									"$" + moneyFormat.format(money) + " eingezahlt.",
-									"Du hast $" + moneyFormat.format(money) + " in die Bank eingezahlt.");
+
+							String moneyDeposited = GrieferGames.getGriefergames().getLanguageHelper()
+									.getText("server.GrieferGamesServer.MoneyDeposited", "${money} deposited.");
+							String moneyDepositedBank = GrieferGames.getGriefergames().getLanguageHelper().getText(
+									"server.GrieferGamesServer.MoneyDepositedBank",
+									"You deposited ${money} into your bank account.");
+
+							moneyDeposited = moneyDeposited.replace("{money}", moneyFormat.format(money));
+							moneyDepositedBank = moneyDepositedBank.replace("{money}", moneyFormat.format(money));
+
+							LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(moneyDeposited,
+									moneyDepositedBank);
 						}
 					}
 					return GrieferGames.getSettings().isBankChatRight() ? ChatDisplayAction.SWAP
@@ -289,9 +315,18 @@ public class GrieferGamesServer extends Server {
 						int money = getMsgHelper().getMoneyBank(unformatted);
 						if (money > 0) {
 							DecimalFormat moneyFormat = (DecimalFormat) DecimalFormat.getNumberInstance(Locale.ENGLISH);
-							LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(
-									"$" + moneyFormat.format(money) + " abgehoben.",
-									"Du hast $" + moneyFormat.format(money) + " von der Bank abgehoben.");
+
+							String moneyWithdrawn = GrieferGames.getGriefergames().getLanguageHelper()
+									.getText("server.GrieferGamesServer.MoneyWithdrawn", "${money} withdrawn.");
+							String moneyWithdrawnBank = GrieferGames.getGriefergames().getLanguageHelper().getText(
+									"server.GrieferGamesServer.MoneyWithdrawnBank",
+									"You have withdrawn ${money} from your bank account.");
+
+							moneyWithdrawn = moneyWithdrawn.replace("{money}", moneyFormat.format(money));
+							moneyWithdrawnBank = moneyWithdrawnBank.replace("{money}", moneyFormat.format(money));
+
+							LabyMod.getInstance().getGuiCustomAchievement().displayAchievement(moneyWithdrawn,
+									moneyWithdrawnBank);
 						}
 					}
 					return GrieferGames.getSettings().isBankChatRight() ? ChatDisplayAction.SWAP
@@ -353,6 +388,7 @@ public class GrieferGamesServer extends Server {
 	public void onJoin(ServerData serverData) {
 		this.getApi().getEventManager().register(new MessageModifyChatEvent() {
 			@Override
+			@SubscribeEvent(priority = EventPriority.HIGH)
 			public Object onModifyChatMessage(Object o) {
 				return modifyChatMessage(o);
 			}
@@ -374,50 +410,27 @@ public class GrieferGamesServer extends Server {
 			String unformatted = msg.getUnformattedText();
 			String formatted = msg.getFormattedText();
 
-			String oldMessage = msg.getFormattedText().replaceAll("\u00A7", "§");
+			String oldMessage = getMsgHelper().getProperTextFormat(formatted);
 
-			if (oldMessage.indexOf("§k") != -1 && GrieferGames.getSettings().isAMPEnabled()) {
-				ITextComponent newMsg = new TextComponentString("");
-				for (ITextComponent component : msg.getSiblings()) {
-					if (component.getStyle().getObfuscated()
-							&& component.getUnformattedText().matches("(([A-z\\-]+\\+?) \\| (\\w{1,16}))")) {
-						Style msgStyling = component.getStyle().createDeepCopy().setObfuscated(false);
-						String chatRepText = GrieferGames.getSettings().getAMPChatReplacement();
+			System.out.println(oldMessage);
 
-						if (chatRepText.indexOf("%CLEAN%") == -1) {
-							chatRepText = GrieferGames.getSettings().getDefaultAMPChatReplacement();
-						}
+			if (GrieferGames.getSettings().isPayHover() || GrieferGames.getSettings().isPayMarker()) {
+				if (msgHelper.isValidPayMessage(unformatted, formatted) > 0) {
+					if (GrieferGames.getSettings().isPayMarker()) {
+						ITextComponent checkmarkText = new TextComponentString(" \u2714")
+								.setStyle(new Style().setColor(TextFormatting.GREEN));
+						msg.appendSibling(checkmarkText);
+					}
+					if (GrieferGames.getSettings().isPayHover()) {
 
-						chatRepText = chatRepText.replaceAll("%CLEAN%", component.getUnformattedText());
-						chatRepText = "${REPSTART}" + chatRepText + "${REPEND}";
+						String ValidPayment = GrieferGames.getGriefergames().getLanguageHelper()
+								.getText("server.GrieferGamesServer.ValidPayment", "valid payment!");
 
-						if (chatRepText.indexOf("%MAGIC%") != -1) {
-							String[] chatRepTextArr = chatRepText.split("%MAGIC%");
-							System.out.println(chatRepTextArr);
-							for (int i = 0; i < chatRepTextArr.length; i++) {
-								if (chatRepTextArr[i] == "${REPSTART}" || chatRepTextArr[i] == "${REPEND}") {
-									newMsg.appendSibling(component);
-								} else {
-									newMsg.appendSibling(new TextComponentString(
-											chatRepTextArr[i].replace("${REPSTART}", "").replace("${REPEND}", ""))
-													.setStyle(msgStyling));
-									if (i != (chatRepTextArr.length - 1))
-										newMsg.appendSibling(component);
-								}
-							}
-						} else {
-							newMsg.appendSibling(new TextComponentString(
-									chatRepText.replace("${REPSTART}", "").replace("${REPEND}", ""))
-											.setStyle(msgStyling));
-						}
-					} else {
-						newMsg.appendSibling(component);
+						ITextComponent hoverText = new TextComponentString(ValidPayment);
+
+						msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
 					}
 				}
-				msg = newMsg;
-				unformatted = msg.getUnformattedText();
-				formatted = msg.getFormattedText();
-				o = msg;
 			}
 
 			if (GrieferGames.getSettings().isPayHover() || GrieferGames.getSettings().isPayMarker()) {
@@ -428,7 +441,12 @@ public class GrieferGamesServer extends Server {
 						msg.appendSibling(checkmarkText);
 					}
 					if (GrieferGames.getSettings().isPayHover()) {
-						ITextComponent hoverText = new TextComponentString("Es ist eine valide Zahlung!");
+
+						String ValidPayment = GrieferGames.getGriefergames().getLanguageHelper()
+								.getText("server.GrieferGamesServer.ValidPayment", "valid payment!");
+
+						ITextComponent hoverText = new TextComponentString(ValidPayment);
+
 						msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
 					}
 				}
@@ -472,7 +490,55 @@ public class GrieferGamesServer extends Server {
 				ITextComponent hoverText = new TextComponentString(dateNowStr);
 				msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
 			}
-		} catch (Exception e) {
+
+			if (GrieferGames.getSettings().isDisplayNameClick()
+					&& msgHelper.isGlobalUserChatMessage(unformatted, formatted) > 0) {
+				msg.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+						"/msg " + getMsgHelper().getUserFromGlobalMessage(unformatted) + " "));
+			}
+
+			if (GrieferGames.getSettings().isDisplayNameClick()
+					&& msgHelper.isValidPrivateMessage(unformatted, formatted) > 0) {
+				msg.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+						"/msg " + getMsgHelper().getPrivateMessageName(unformatted) + " "));
+			}
+
+			if (GrieferGames.getSettings().isDisplayNameClick()
+					&& msgHelper.isValidSendPrivateMessage(unformatted, formatted) > 0) {
+				msg.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+						"/msg " + getMsgHelper().getSentPrivateMessageName(unformatted) + " "));
+			}
+
+			if (oldMessage.indexOf("§k") != -1 && GrieferGames.getSettings().isAMPEnabled()) {
+				ITextComponent newMsg = new TextComponentString("");
+				for (ITextComponent component : msg.getSiblings()) {
+					if (component.getStyle().getObfuscated()
+							&& component.getUnformattedText().matches("(([A-z\\-]+\\+?) \\| (\\w{1,16}))")) {
+						Style msgStyling = component.getStyle().createDeepCopy().setObfuscated(false);
+						String chatRepText = GrieferGames.getSettings().getAMPChatReplacement();
+
+						if (chatRepText.indexOf("%CLEAN%") == -1) {
+							chatRepText = GrieferGames.getSettings().getDefaultAMPChatReplacement();
+						}
+
+						chatRepText = chatRepText.replaceAll("%CLEAN%", component.getUnformattedText());
+						chatRepText = "${REPSTART}" + chatRepText + "${REPEND}";
+
+						newMsg.appendSibling(
+								new TextComponentString(chatRepText.replace("${REPSTART}", "").replace("${REPEND}", ""))
+										.setStyle(msgStyling));
+					} else {
+						newMsg.appendSibling(component);
+					}
+				}
+				msg = newMsg;
+				unformatted = msg.getUnformattedText();
+				formatted = msg.getFormattedText();
+				o = msg;
+			}
+		} catch (
+
+		Exception e) {
 			e.printStackTrace();
 		}
 		return o;
@@ -518,7 +584,8 @@ public class GrieferGamesServer extends Server {
 				if (getSubServer().equalsIgnoreCase("lobby")) {
 					GrieferGames.getGriefergames().setFlyActive(false);
 				} else {
-					GrieferGames.getGriefergames().setFlyActive(getMc().player.capabilities.allowFlying);
+					GrieferGames.getGriefergames()
+							.setFlyActive(LabyModCore.getMinecraft().getPlayer().capabilities.allowFlying);
 				}
 			}
 		}
@@ -528,8 +595,9 @@ public class GrieferGamesServer extends Server {
 	public void onPreRender(RenderGameOverlayEvent event) {
 		if (getMc().gameSettings.keyBindPlayerList.isKeyDown() && !getMc().isIntegratedServerRunning()
 				&& GrieferGames.getSettings().isAMPEnabled()) {
-			ScoreObjective scoreobjective = getMc().world.getScoreboard().getObjectiveInDisplaySlot(0);
-			NetHandlerPlayClient handler = getMc().player.connection;
+			ScoreObjective scoreobjective = LabyModCore.getMinecraft().getWorld().getScoreboard()
+					.getObjectiveInDisplaySlot(0);
+			NetHandlerPlayClient handler = LabyModCore.getMinecraft().getPlayer().connection;
 			if (handler.getPlayerInfoMap().size() > 1 || scoreobjective != null) {
 				Collection<NetworkPlayerInfo> players = handler.getPlayerInfoMap();
 				for (NetworkPlayerInfo player : players) {
@@ -553,27 +621,9 @@ public class GrieferGamesServer extends Server {
 										chatRepText = chatRepText.replaceAll("%CLEAN%", component.getUnformattedText());
 										chatRepText = "${REPSTART}" + chatRepText + "${REPEND}";
 
-										if (chatRepText.indexOf("%MAGIC%") != -1) {
-											String[] chatRepTextArr = chatRepText.split("%MAGIC%");
-											System.out.println(chatRepTextArr);
-											for (int i = 0; i < chatRepTextArr.length; i++) {
-												if (chatRepTextArr[i] == "${REPSTART}"
-														|| chatRepTextArr[i] == "${REPEND}") {
-													newPlayerDisplayName.appendSibling(component);
-												} else {
-													newPlayerDisplayName.appendSibling(new TextComponentString(
-															chatRepTextArr[i].replace("${REPSTART}", "")
-																	.replace("${REPEND}", ""))
-																			.setStyle(playerDisplayNameStyling));
-													if (i != (chatRepTextArr.length - 1))
-														newPlayerDisplayName.appendSibling(component);
-												}
-											}
-										} else {
-											newPlayerDisplayName.appendSibling(new TextComponentString(
-													chatRepText.replace("${REPSTART}", "").replace("${REPEND}", ""))
-															.setStyle(playerDisplayNameStyling));
-										}
+										newPlayerDisplayName.appendSibling(new TextComponentString(
+												chatRepText.replace("${REPSTART}", "").replace("${REPEND}", ""))
+														.setStyle(playerDisplayNameStyling));
 										player.setDisplayName(newPlayerDisplayName);
 									}
 								}
