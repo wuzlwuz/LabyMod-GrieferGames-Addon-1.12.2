@@ -591,10 +591,13 @@ public class GrieferGamesServer extends Server {
 						.setStyle(new Style().setColor(TextFormatting.GOLD));
 				ITextComponent timeMsg = new TextComponentString(dateNowStr)
 						.setStyle(new Style().setColor(TextFormatting.WHITE));
-				ITextComponent aftTimeMsg = new TextComponentString("] ")
+				ITextComponent aftTimeMsg = new TextComponentString("]")
 						.setStyle(new Style().setColor(TextFormatting.GOLD));
+				ITextComponent resetMsg = new TextComponentString(" ")
+						.setStyle(new Style().setColor(TextFormatting.RESET));
 
-				ITextComponent newMsg = befTimeMsg.appendSibling(timeMsg).appendSibling(aftTimeMsg).appendSibling(msg);
+				ITextComponent newMsg = befTimeMsg.appendSibling(timeMsg).appendSibling(aftTimeMsg)
+						.appendSibling(resetMsg).appendSibling(msg);
 				msg = newMsg;
 			}
 
