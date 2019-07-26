@@ -13,8 +13,10 @@ import java.util.UUID;
 import com.mojang.authlib.GameProfile;
 
 import de.wuzlwuz.griefergames.GrieferGames;
+import de.wuzlwuz.griefergames.booster.Booster;
 import de.wuzlwuz.griefergames.helper.MessageHelper;
 import de.wuzlwuz.griefergames.listener.SubServerListener;
+import de.wuzlwuz.griefergames.modules.BoosterModule;
 import de.wuzlwuz.griefergames.modules.FlyModule;
 import de.wuzlwuz.griefergames.modules.GodmodeModule;
 import de.wuzlwuz.griefergames.modules.VanishModule;
@@ -22,7 +24,9 @@ import net.labymod.api.LabyModAPI;
 import net.labymod.api.events.MessageModifyChatEvent;
 import net.labymod.api.events.TabListEvent;
 import net.labymod.core.LabyModCore;
+import net.labymod.ingamegui.ModuleCategoryRegistry;
 import net.labymod.main.LabyMod;
+import net.labymod.main.lang.LanguageManager;
 import net.labymod.servermanager.ChatDisplayAction;
 import net.labymod.servermanager.Server;
 import net.labymod.settings.elements.SettingsElement;
@@ -65,6 +69,7 @@ public class GrieferGamesServer extends Server {
 	private boolean isInTeam = false;
 	private boolean modulesLoaded = false;
 	private String lastMsg = "";
+	ITextComponent resetMsg = new TextComponentString(" ").setStyle(new Style().setColor(TextFormatting.RESET));
 
 	private boolean listenerLoaded = false;
 
@@ -131,17 +136,15 @@ public class GrieferGamesServer extends Server {
 	}
 
 	public GrieferGamesServer(Minecraft minecraft) {
-		super("GrieferGames", "griefergames.net");
+		super("GrieferGames", GrieferGames.getGriefergames().getServerIp());
 		setMc(minecraft);
 		setApi(GrieferGames.getGriefergames().getApi());
 		setMsgHelper(new MessageHelper());
 		addSubServerListener(new SubServerListener() {
 			@Override
 			public void onSubServerChanged(String subServerNameOld, String subServerName) {
-				GrieferGames.getGriefergames().setGodActive(false);
-				GrieferGames.getGriefergames().setVanishActive(false);
-
 				if (subServerName.equalsIgnoreCase("lobby")) {
+					GrieferGames.getGriefergames().setShowBoosterDummy(true);
 					String accountName = LabyModCore.getMinecraft().getPlayer().getName().trim();
 
 					try {
@@ -159,6 +162,10 @@ public class GrieferGamesServer extends Server {
 						}
 						if (!getModulesLoaded()) {
 							setModulesLoaded(true);
+
+							ModuleCategoryRegistry.loadCategory(GrieferGames.getGriefergames().getModuleCategory());
+
+							new BoosterModule();
 							new FlyModule();
 							if (getMsgHelper().showGodModule(getPlayerRank())) {
 								new GodmodeModule();
@@ -170,7 +177,13 @@ public class GrieferGamesServer extends Server {
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
+				} else {
+					GrieferGames.getGriefergames().setShowBoosterDummy(false);
+					GrieferGames.getGriefergames().setBoosters(new ArrayList<Booster>());
 				}
+
+				GrieferGames.getGriefergames().setGodActive(false);
+				GrieferGames.getGriefergames().setVanishActive(getMsgHelper().vanishDefaultState(getPlayerRank()));
 			}
 		});
 	}
@@ -225,6 +238,14 @@ public class GrieferGamesServer extends Server {
 							: ChatDisplayAction.NORMAL;
 				}
 
+				getMsgHelper().isValidBoosterMessage(unformatted, formatted);
+				getMsgHelper().isValidBoosterDoneMessage(unformatted, formatted);
+				getMsgHelper().checkCurrentBoosters(unformatted, formatted);
+
+				if (getMsgHelper().isSwitcherDoneMsg(unformatted, formatted) > 0) {
+					getMc().player.sendChatMessage("/booster");
+				}
+
 				if (GrieferGames.getSettings().isFilterDuplicateMessages() && getLastMessage().equals(formatted)) {
 					return ChatDisplayAction.HIDE;
 				}
@@ -246,6 +267,9 @@ public class GrieferGamesServer extends Server {
 				if (getMsgHelper().isSupremeBlank(unformatted, formatted) > 0) {
 					return GrieferGames.getSettings().isCleanSupremeBlanks() ? ChatDisplayAction.HIDE
 							: ChatDisplayAction.NORMAL;
+				} else if (getMsgHelper().isVoteMsg(unformatted, formatted) > 0) {
+					return GrieferGames.getSettings().isCleanVoteMsg() ? ChatDisplayAction.HIDE
+							: ChatDisplayAction.NORMAL;
 				} else if (getMsgHelper().isValidPayMessage(unformatted, formatted) > 0) {
 					if (GrieferGames.getSettings().isPayAchievement()) {
 						String payerName = getMsgHelper().getPayerName(unformatted);
@@ -255,10 +279,10 @@ public class GrieferGamesServer extends Server {
 						if (money > 0) {
 							DecimalFormat moneyFormat = (DecimalFormat) DecimalFormat.getNumberInstance(Locale.ENGLISH);
 
-							String gotMoney = GrieferGames.getGriefergames().getLanguageHelper()
-									.getText("server.GrieferGamesServer.GotMoney", "${money} received.");
-							String gotMoneyFrom = GrieferGames.getGriefergames().getLanguageHelper().getText(
-									"server.GrieferGamesServer.GotMoneyFrom", "You received ${money} from {name}.");
+							String gotMoney = LanguageManager.translateOrReturnKey("message_gg_gotMoney",
+									new Object[0]);
+							String gotMoneyFrom = LanguageManager.translateOrReturnKey("message_gg_gotMoneyFrom",
+									new Object[0]);
 
 							gotMoney = gotMoney.replace("{money}", moneyFormat.format(money));
 							gotMoneyFrom = gotMoneyFrom.replace("{money}", moneyFormat.format(money));
@@ -287,10 +311,10 @@ public class GrieferGamesServer extends Server {
 						if (money > 0) {
 							DecimalFormat moneyFormat = (DecimalFormat) DecimalFormat.getNumberInstance(Locale.ENGLISH);
 
-							String paidMoney = GrieferGames.getGriefergames().getLanguageHelper()
-									.getText("server.GrieferGamesServer.PaidMoney", "${money} paid.");
-							String paidMoneyTo = GrieferGames.getGriefergames().getLanguageHelper()
-									.getText("server.GrieferGamesServer.PaidMoneyTo", "You paid ${money} to {name}.");
+							String paidMoney = LanguageManager.translateOrReturnKey("message_gg_paidMoney",
+									new Object[0]);
+							String paidMoneyTo = LanguageManager.translateOrReturnKey("message_gg_paidMoneyTo",
+									new Object[0]);
 
 							paidMoney = paidMoney.replace("{money}", moneyFormat.format(money));
 							paidMoneyTo = paidMoneyTo.replace("{money}", moneyFormat.format(money));
@@ -316,11 +340,10 @@ public class GrieferGamesServer extends Server {
 						if (money > 0) {
 							DecimalFormat moneyFormat = (DecimalFormat) DecimalFormat.getNumberInstance(Locale.ENGLISH);
 
-							String moneyDeposited = GrieferGames.getGriefergames().getLanguageHelper()
-									.getText("server.GrieferGamesServer.MoneyDeposited", "${money} deposited.");
-							String moneyDepositedBank = GrieferGames.getGriefergames().getLanguageHelper().getText(
-									"server.GrieferGamesServer.MoneyDepositedBank",
-									"You deposited ${money} into your bank account.");
+							String moneyDeposited = LanguageManager.translateOrReturnKey("message_gg_moneyDeposited",
+									new Object[0]);
+							String moneyDepositedBank = LanguageManager
+									.translateOrReturnKey("message_gg_moneyDepositedBank", new Object[0]);
 
 							moneyDeposited = moneyDeposited.replace("{money}", moneyFormat.format(money));
 							moneyDepositedBank = moneyDepositedBank.replace("{money}", moneyFormat.format(money));
@@ -337,11 +360,10 @@ public class GrieferGamesServer extends Server {
 						if (money > 0) {
 							DecimalFormat moneyFormat = (DecimalFormat) DecimalFormat.getNumberInstance(Locale.ENGLISH);
 
-							String moneyWithdrawn = GrieferGames.getGriefergames().getLanguageHelper()
-									.getText("server.GrieferGamesServer.MoneyWithdrawn", "${money} withdrawn.");
-							String moneyWithdrawnBank = GrieferGames.getGriefergames().getLanguageHelper().getText(
-									"server.GrieferGamesServer.MoneyWithdrawnBank",
-									"You have withdrawn ${money} from your bank account.");
+							String moneyWithdrawn = LanguageManager.translateOrReturnKey("message_gg_moneyWithdrawn",
+									new Object[0]);
+							String moneyWithdrawnBank = LanguageManager
+									.translateOrReturnKey("message_gg_moneyWithdrawnBank", new Object[0]);
 
 							moneyWithdrawn = moneyWithdrawn.replace("{money}", moneyFormat.format(money));
 							moneyWithdrawnBank = moneyWithdrawnBank.replace("{money}", moneyFormat.format(money));
@@ -409,11 +431,13 @@ public class GrieferGamesServer extends Server {
 	public void onJoin(ServerData serverData) {
 		if (!getListenerLoaded()) {
 			this.getApi().getEventManager().register(new MessageModifyChatEvent() {
+
 				@Override
 				@SubscribeEvent(priority = EventPriority.HIGH)
 				public Object onModifyChatMessage(Object o) {
 					return modifyChatMessage(o);
 				}
+
 			});
 			this.getApi().registerForgeListener(this);
 			setListenerLoaded(true);
@@ -445,29 +469,10 @@ public class GrieferGamesServer extends Server {
 					}
 					if (GrieferGames.getSettings().isPayHover()) {
 
-						String ValidPayment = GrieferGames.getGriefergames().getLanguageHelper()
-								.getText("server.GrieferGamesServer.ValidPayment", "valid payment!");
+						String ValidPayment = LanguageManager.translateOrReturnKey("message_gg_validPayment",
+								new Object[0]);
 
 						ITextComponent hoverText = new TextComponentString(ValidPayment);
-						msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
-					}
-				}
-			}
-
-			if (GrieferGames.getSettings().isPayHover() || GrieferGames.getSettings().isPayMarker()) {
-				if (msgHelper.isValidPayMessage(unformatted, formatted) > 0) {
-					if (GrieferGames.getSettings().isPayMarker()) {
-						ITextComponent checkmarkText = new TextComponentString(" \u2714")
-								.setStyle(new Style().setColor(TextFormatting.GREEN));
-						msg.appendSibling(checkmarkText);
-					}
-					if (GrieferGames.getSettings().isPayHover()) {
-
-						String ValidPayment = GrieferGames.getGriefergames().getLanguageHelper()
-								.getText("server.GrieferGamesServer.ValidPayment", "valid payment!");
-
-						ITextComponent hoverText = new TextComponentString(ValidPayment);
-
 						msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
 					}
 				}
@@ -580,6 +585,20 @@ public class GrieferGamesServer extends Server {
 				msg = newMsg;
 			}
 
+			if (GrieferGames.getSettings().isMarkTPAMsg() && msgHelper.isTPAHERE(unformatted, formatted) > 0) {
+				ITextComponent beforeTpaMsg = new TextComponentString("[TPAHERE] ")
+						.setStyle(new Style().setColor(TextFormatting.DARK_RED).setBold(true));
+				ITextComponent newMsg = new TextComponentString("").appendSibling(beforeTpaMsg).appendSibling(msg);
+				msg = newMsg;
+			}
+
+			if (GrieferGames.getSettings().isMarkTPAMsg() && msgHelper.isTPA(unformatted, formatted) > 0) {
+				ITextComponent beforeTpaMsg = new TextComponentString("[TPA] ")
+						.setStyle(new Style().setColor(TextFormatting.DARK_GREEN).setBold(true));
+				ITextComponent newMsg = new TextComponentString("").appendSibling(beforeTpaMsg).appendSibling(msg);
+				msg = newMsg;
+			}
+
 			if (GrieferGames.getSettings().isShowChatTime()) {
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 				String dateNowStr = LocalDateTime.now().format(formatter);
@@ -590,8 +609,6 @@ public class GrieferGamesServer extends Server {
 						.setStyle(new Style().setColor(TextFormatting.WHITE));
 				ITextComponent aftTimeMsg = new TextComponentString("]")
 						.setStyle(new Style().setColor(TextFormatting.GOLD));
-				ITextComponent resetMsg = new TextComponentString(" ")
-						.setStyle(new Style().setColor(TextFormatting.RESET));
 
 				ITextComponent newMsg = new TextComponentString("").appendSibling(befTimeMsg).appendSibling(timeMsg)
 						.appendSibling(aftTimeMsg).appendSibling(resetMsg).appendSibling(msg);
