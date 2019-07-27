@@ -143,6 +143,9 @@ public class GrieferGamesServer extends Server {
 		addSubServerListener(new SubServerListener() {
 			@Override
 			public void onSubServerChanged(String subServerNameOld, String subServerName) {
+				if (getMsgHelper().doResetBoosterBySubserver(subServerName)) {
+					GrieferGames.getGriefergames().setBoosters(new ArrayList<Booster>());
+				}
 				if (subServerName.equalsIgnoreCase("lobby")) {
 					GrieferGames.getGriefergames().setShowBoosterDummy(true);
 					String accountName = LabyModCore.getMinecraft().getPlayer().getName().trim();
@@ -179,7 +182,6 @@ public class GrieferGamesServer extends Server {
 					}
 				} else {
 					GrieferGames.getGriefergames().setShowBoosterDummy(false);
-					GrieferGames.getGriefergames().setBoosters(new ArrayList<Booster>());
 				}
 
 				GrieferGames.getGriefergames().setGodActive(false);
@@ -244,6 +246,7 @@ public class GrieferGamesServer extends Server {
 
 				if (GrieferGames.getSettings().isUpdateBoosterState()
 						&& getMsgHelper().isSwitcherDoneMsg(unformatted, formatted) > 0) {
+					GrieferGames.getGriefergames().setBoosters(new ArrayList<Booster>());
 					getMc().player.sendChatMessage("/booster");
 				}
 
