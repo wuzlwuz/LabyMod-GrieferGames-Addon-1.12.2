@@ -508,7 +508,6 @@ public class GrieferGamesServer extends Server {
 					}
 					msg = newMsg;
 				}
-
 			}
 
 			if (GrieferGames.getSettings().isMobRemoverLastTimeHover()
@@ -528,8 +527,10 @@ public class GrieferGamesServer extends Server {
 					String username = "/msg " + getMsgHelper().getUserFromGlobalMessage(unformatted) + " ";
 					msg.getSiblings().get(0).getStyle()
 							.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, username));
-					if (msg.getSiblings().size() > 4 && getMsgHelper()
-							.getProperTextFormat(msg.getSiblings().get(3).getFormattedText()).equals("§8: §r")) {
+					if (msg.getSiblings().size() > 4 && (getMsgHelper()
+							.getProperTextFormat(msg.getSiblings().get(3).getFormattedText()).equals("§8: §r")
+							|| getMsgHelper().getProperTextFormat(msg.getSiblings().get(5).getFormattedText())
+									.equals("§8: §r"))) {
 						msg.getSiblings().get(1).getStyle()
 								.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, username));
 					}
