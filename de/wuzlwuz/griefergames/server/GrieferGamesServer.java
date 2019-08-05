@@ -540,13 +540,16 @@ public class GrieferGamesServer extends Server {
 			if (GrieferGames.getSettings().isMsgDisplayNameClick()
 					&& msgHelper.isValidPrivateMessage(unformatted, formatted) > 0) {
 
-				if (msg.getSiblings().size() > 5) {
-					String username = "/msg " + getMsgHelper().getPrivateMessageName(unformatted) + " ";
-					msg.getSiblings().get(1).getStyle()
+				if (msg.getSiblings().size() > 3) {
+					String username = "/msg " + getMsgHelper().getUserFromGlobalMessage(unformatted) + " ";
+					msg.getSiblings().get(0).getStyle()
 							.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, username));
-					if (getMsgHelper().getProperTextFormat(msg.getSiblings().get(5).getFormattedText())
-							.equals("§6] §r")) {
-						msg.getSiblings().get(2).getStyle()
+					if ((msg.getSiblings().size() > 4 && getMsgHelper()
+							.getProperTextFormat(msg.getSiblings().get(3).getFormattedText()).equals("§8: §r"))
+							|| (msg.getSiblings().size() > 6
+									&& getMsgHelper().getProperTextFormat(msg.getSiblings().get(5).getFormattedText())
+											.equals("§8: §r"))) {
+						msg.getSiblings().get(1).getStyle()
 								.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, username));
 					}
 				}
