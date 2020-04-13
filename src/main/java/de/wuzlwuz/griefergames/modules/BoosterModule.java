@@ -18,7 +18,6 @@ import net.labymod.ingamegui.Module;
 import net.labymod.ingamegui.ModuleCategory;
 import net.labymod.main.DefaultValues;
 import net.labymod.main.LabyMod;
-import net.labymod.main.lang.LanguageManager;
 import net.labymod.settings.elements.ColorPickerCheckBoxBulkElement;
 import net.labymod.settings.elements.ControlElement;
 import net.labymod.settings.elements.SettingsElement;
@@ -31,13 +30,17 @@ import net.minecraft.util.ResourceLocation;
 public class BoosterModule extends Module {
 	private List<Booster> dummyBooster = new ArrayList<Booster>();
 
+	protected GrieferGames getGG() {
+		return GrieferGames.getGriefergames();
+	}
+
 	public BoosterModule() {
 		dummyBooster.add(new BreakBooster(1));
 		dummyBooster.add(new DropBooster(4));
 		dummyBooster.add(new ExperienceBooster(6));
 		dummyBooster.add(new FlyBooster(1));
 		dummyBooster.add(new MobBooster(3));
-		GrieferGames.getGriefergames().getApi().registerModule(this);
+		getGG().getApi().registerModule(this);
 	}
 
 	public void init() {
@@ -114,7 +117,7 @@ public class BoosterModule extends Module {
 	}
 
 	public boolean isShown() {
-		return GrieferGames.getGriefergames().isShowModules();
+		return getGG().isShowModules();
 	}
 
 	protected boolean supportsRescale() {
@@ -122,10 +125,10 @@ public class BoosterModule extends Module {
 	}
 
 	private Collection<Booster> getActiveBoosters() {
-		if (GrieferGames.getGriefergames().isShowModules() && GrieferGames.getGriefergames().isShowBoosterDummy()) {
+		if (getGG().isShowModules() && getGG().isShowBoosterDummy()) {
 			return this.dummyBooster;
 		}
-		return GrieferGames.getGriefergames().getBoosters();
+		return getGG().getBoosters();
 	}
 
 	private int getColor(String key, int defaultColor) {
@@ -242,15 +245,15 @@ public class BoosterModule extends Module {
 		return "gg_booster";
 	}
 
+	public String getDescription() {
+		return "";
+	}
+
 	public int getSortingId() {
 		return 10;
 	}
 
 	public ModuleCategory getCategory() {
-		return GrieferGames.getGriefergames().getModuleCategory();
-	}
-
-	public String getDescription() {
-		return LanguageManager.translateOrReturnKey("module_gg_booster_description", new Object[0]);
+		return getGG().getModuleCategory();
 	}
 }
