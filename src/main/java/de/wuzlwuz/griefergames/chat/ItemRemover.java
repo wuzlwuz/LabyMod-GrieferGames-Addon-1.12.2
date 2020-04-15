@@ -6,9 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.labymod.servermanager.ChatDisplayAction;
-import net.minecraft.event.HoverEvent;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.IChatComponent;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.event.HoverEvent;
 
 public class ItemRemover extends Chat {
 	private static Pattern itemRemoverMessageRegex = Pattern.compile(
@@ -37,7 +37,7 @@ public class ItemRemover extends Chat {
 	}
 
 	@Override
-	public boolean doActionModifyChatMessage(IChatComponent msg) {
+	public boolean doActionModifyChatMessage(ITextComponent msg) {
 		String unformatted = msg.getUnformattedText();
 
 		Matcher itemRemoverDoneMessage = itemRemoverDoneMessageRegex.matcher(unformatted);
@@ -54,13 +54,13 @@ public class ItemRemover extends Chat {
 	}
 
 	@Override
-	public IChatComponent modifyChatMessage(IChatComponent msg) {
+	public ITextComponent modifyChatMessage(ITextComponent msg) {
 		if (getSettings().isItemRemoverLastTimeHover() && doActionModifyChatMessage(msg)) {
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 			String dateNowStr = LocalDateTime.now().format(formatter);
 
-			IChatComponent hoverText = new ChatComponentText(dateNowStr);
-			msg.getChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
+			ITextComponent hoverText = new TextComponentString(dateNowStr);
+			msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
 		}
 		return super.modifyChatMessage(msg);
 	}
