@@ -135,21 +135,19 @@ public class ModSettings {
 	public String getPrivateChatSoundPath() {
 		switch (this.privateChatSound) {
 		case BASS:
-			return "note.bass";
-		case BASSATTACK:
-			return "note.bassattack";
-		case BD:
-			return "note.bd";
+			return "block.note.bass";
+		case BASSDRUM:
+			return "block.note.bassdrum";
 		case HARP:
-			return "note.harp";
+			return "block.note.harp";
 		case HAT:
-			return "note.hat";
+			return "block.note.hat";
 		case PLING:
-			return "note.pling";
+			return "block.note.pling";
 		case POP:
-			return "random.pop";
+			return "entity.item.pickup";
 		case SNARE:
-			return "note.snare";
+			return "block.note.snare";
 		default:
 			return "";
 		}
