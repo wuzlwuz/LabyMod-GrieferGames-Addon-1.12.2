@@ -9,10 +9,11 @@ import net.minecraft.util.text.event.ClickEvent;
 
 public class GlobalMessage extends Chat {
 	// private static Pattern msgUserGlobalChatRegex =
-	// Pattern.compile("^([A-Za-z\\-]+\\+?) \\| (\\w{1,16})\\s\\:");
-	private static Pattern msgUserGlobalChatRegex = Pattern.compile("^([A-Za-z\\-]+\\+?) \\| ((\\u007E)?\\w{1,16})");
+	// Pattern.compile("^([A-Za-z\\-]+\\+?) \\u2503 (\\w{1,16})\\s\\u00BB");
+	private static Pattern msgUserGlobalChatRegex = Pattern
+			.compile("^([A-Za-z\\-]+\\+?) \\u2503 ((\\u007E)?\\w{1,16})");
 	private static Pattern msgUserGlobalChatClanRegex = Pattern
-			.compile("^(\\[[^\\]]+\\])\\s([A-Za-z\\-]+\\+?) \\| ((\\u007E)?\\w{1,16})\\s\\:");
+			.compile("^(\\[[^\\]]+\\])\\s([A-Za-z\\-]+\\+?) \\u2503 ((\\u007E)?\\w{1,16})\\s\\u00BB");
 
 	@Override
 	public String getName() {
@@ -52,19 +53,14 @@ public class GlobalMessage extends Chat {
 		int nameStart = 0;
 		int nameEnd = 0;
 		for (ITextComponent msgs : msg.getSiblings()) {
-			siblingCnt++;
 			if (msgs.getUnformattedText().equals("] ") && nameStart == 0) {
-				nameStart = siblingCnt;
+				nameStart = siblingCnt + 1;
 			}
 
-			if (getHelper().getDisplayName(msgs.getUnformattedText()).length() > 0) {
-				nameEnd = siblingCnt;
-			} else if (siblingCnt > 0 && getHelper()
-					.getDisplayName(
-							msg.getSiblings().get(siblingCnt - 1).getUnformattedText() + msgs.getUnformattedText())
-					.length() > 0) {
-				nameEnd = siblingCnt;
+			if (msgs.getUnformattedText().trim().equalsIgnoreCase("\u00BB")) {
+				nameEnd = siblingCnt - 1;
 			}
+			siblingCnt++;
 		}
 
 		// String suggestMsgHoverTxt =
@@ -73,14 +69,10 @@ public class GlobalMessage extends Chat {
 		// ITextComponent hoverText = new TextComponentString(ModColor.cl("a") +
 		// suggestMsgHoverTxt);
 
-		msg.getSiblings().get(nameStart).getStyle()
-				.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, username));
-		// .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
-
-		if (nameStart != nameEnd) {
-			msg.getSiblings().get(nameEnd).getStyle()
+		for (int i = nameStart; i <= nameEnd; i++) {
+			msg.getSiblings().get(i).getStyle()
 					.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, username));
-			// .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
+			// .setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText));
 		}
 
 		return msg;
